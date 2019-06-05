@@ -1,0 +1,13 @@
+{
+  "type": "listform",
+  "name": "Map List",
+  "fields": {
+    "count": 4
+  },
+  "capabilities": {
+        "map": true
+    },
+  "sdk": {
+    "name": "AnimatedCollectionViewLayout"
+  }
+}
