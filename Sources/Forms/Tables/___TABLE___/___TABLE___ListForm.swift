@@ -68,12 +68,10 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         let blueColor = UIColor(red: 85/255, green: 183/255, blue: 174/255, alpha: 1.0)
 
         // Floating SearchBar definition
-        searchBar = UISearchBar(frame: CGRect(x: 20, y: 50, width: UIScreen.main.bounds.width - 100, height: 40))
-        searchBar.layer.cornerRadius = 10
+        searchBar = UISearchBar(frame: CGRect(x: 20, y: 50, width: UIScreen.main.bounds.width - 100, height: 48))
+        searchBar.layer.cornerRadius = 15
         searchBar.layer.masksToBounds = true
         searchBar.transform = CGAffineTransform(scaleX: 0, y: 0)
-        searchBar.layer.borderColor = UIColor.lightGray.cgColor
-        searchBar.layer.borderWidth = 0.2
         let barButtonAppearanceInSearchBar: UIBarButtonItem?
         barButtonAppearanceInSearchBar = UIBarButtonItem.appearance(whenContainedInInstancesOf: [UISearchBar.self])
         barButtonAppearanceInSearchBar?.tintColor = blueColor
@@ -88,10 +86,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         textFieldInsideUISearchBarLabel?.textColor = blueColor
         textFieldInsideUISearchBarLabel?.font = UIFont(name: "HelveticaNeue-Thin", size: 15)
         self.refreshControl?.tintColor = blueColor
-        searchBar.searchBarStyle = UISearchBar.Style.prominent
         searchBar.placeholder = " Search by address"
-        searchBar.isTranslucent = false
-        searchBar.backgroundImage = UIImage()
         searchBar.delegate = self
         self.view.addSubview(searchBar)
     }
