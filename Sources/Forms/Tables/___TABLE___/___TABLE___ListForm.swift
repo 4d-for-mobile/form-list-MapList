@@ -155,7 +155,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         if let location = record.___FIELD_1___ {
 
             let geocoder = CLGeocoder()
-            geocoder.geocodeAddressString(location) { [weak self] placemarks, error in
+            geocoder.geocodeAddressString(location) { [weak self] placemarks, _ in
                 if let placemark = placemarks?.first, let location = placemark.location {
                     let mark = MKPlacemark(placemark: placemark)
 
@@ -182,7 +182,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
 
                         let directions = MKDirections(request: directionRequest)
 
-                        directions.calculate { (routeRepsonse, routeError) -> Void in
+                        directions.calculate { (routeRepsonse, _) -> Void in
 
                             let route = routeRepsonse?.routes[0]
                             self?.mapView.addOverlay((route?.polyline)!, level: MKOverlayLevel.aboveRoads)
