@@ -140,7 +140,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         // Fix position when searching
         scrollView.setContentOffset(.zero, animated: false)
     }
-    
+
     // swiftlint:disable:next function_body_length
     func findPosition() {
         var visibleRect = CGRect()
@@ -212,10 +212,10 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
     func MKMapRectForCoordinateRegion(region: MKCoordinateRegion) -> MKMapRect {
         let topLeft = CLLocationCoordinate2D(latitude: region.center.latitude + (region.span.latitudeDelta/2), longitude: region.center.longitude - (region.span.longitudeDelta/2))
         let bottomRight = CLLocationCoordinate2D(latitude: region.center.latitude - (region.span.latitudeDelta/2), longitude: region.center.longitude + (region.span.longitudeDelta/2))
-        let topLeft = MKMapPoint(topLeft)
-        let bottomRight = MKMapPoint(bottomRight)
+        let top = MKMapPoint(topLeft)
+        let bottom = MKMapPoint(bottomRight)
 
-        return MKMapRect(origin: MKMapPoint(x: min(topLeft.x, bottomRight.x), y: min(topLeft.y, bottomRight.y)), size: MKMapSize(width: abs(topLeft.x-bottomRight.x), height: abs(topLeft.y-bottomRight.y)))
+        return MKMapRect(origin: MKMapPoint(x: min(top.x, bottom.x), y: min(top.y, bottom.y)), size: MKMapSize(width: abs(top.x-bottom.x), height: abs(top.y-bottom.y)))
     }
 
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
@@ -246,7 +246,6 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
     override func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         print(indexPath.row)
         if let cells = self.collectionView?.visibleCells {
-            print(cells.count)
         }
     }
 
