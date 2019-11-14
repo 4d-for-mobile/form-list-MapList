@@ -21,11 +21,11 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
 
     @IBInspectable open var animator: String = "parallax" {
         didSet {
-            self._animator = ___TABLE___LayoutAttributesAnimatorType(string: self.animator)
+            self.animator = ___TABLE___LayoutAttributesAnimatorType(string: self.animator)
         }
     }
 
-    var _animator: ___TABLE___LayoutAttributesAnimatorType = .parallax {
+    var animator: ___TABLE___LayoutAttributesAnimatorType = .parallax {
         didSet {
             updateLayoutAnimator()
         }
@@ -140,7 +140,8 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         // Fix position when searching
         scrollView.setContentOffset(.zero, animated: false)
     }
-
+    
+    // swiftlint:disable:next function_body_length
     func findPosition() {
         var visibleRect = CGRect()
         visibleRect.origin = collectionView.contentOffset
@@ -211,10 +212,10 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
     func MKMapRectForCoordinateRegion(region: MKCoordinateRegion) -> MKMapRect {
         let topLeft = CLLocationCoordinate2D(latitude: region.center.latitude + (region.span.latitudeDelta/2), longitude: region.center.longitude - (region.span.longitudeDelta/2))
         let bottomRight = CLLocationCoordinate2D(latitude: region.center.latitude - (region.span.latitudeDelta/2), longitude: region.center.longitude + (region.span.longitudeDelta/2))
-        let a = MKMapPoint(topLeft)
-        let b = MKMapPoint(bottomRight)
+        let topLeft = MKMapPoint(topLeft)
+        let bottomRight = MKMapPoint(bottomRight)
 
-        return MKMapRect(origin: MKMapPoint(x: min(a.x, b.x), y: min(a.y, b.y)), size: MKMapSize(width: abs(a.x-b.x), height: abs(a.y-b.y)))
+        return MKMapRect(origin: MKMapPoint(x: min(topLeft.x, bottomRight.x), y: min(topLeft.y, bottomRight.y)), size: MKMapSize(width: abs(topLeft.x-bottomRight.x), height: abs(topLeft.y-bottomRight.y)))
     }
 
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
