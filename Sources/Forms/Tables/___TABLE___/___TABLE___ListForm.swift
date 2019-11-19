@@ -18,7 +18,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
     @IBOutlet weak var mapView: MKMapView!
     let annotation = MKPointAnnotation()
     var locationManager = CLLocationManager()
-    var locBool = Bool()
+    var hasLocationActivated = false
     let actionButton = UIButton()
 
     /// List of record from data sources
@@ -71,7 +71,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         textFieldInsideUISearchBar?.font = UIFont(name: "HelveticaNeue-Thin", size: 15)
 
         // SearchBar placeholder style
-        let textFieldInsideUISearchBarLabel = textFieldInsideUISearchBar!.value(forKey: "placeholderLabel") as? UILabel
+        let textFieldInsideUISearchBarLabel = textFieldInsideUISearchBar?.value(forKey: "placeholderLabel") as? UILabel
         textFieldInsideUISearchBarLabel?.textColor = blueColor
         textFieldInsideUISearchBarLabel?.font = UIFont(name: "HelveticaNeue-Thin", size: 15)
         self.refreshControl?.tintColor = blueColor
@@ -147,7 +147,6 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         findPosition()
     }
 
-    // swiftlint:disable:next function_body_length
     func findPosition() {
         var visibleRect = CGRect()
         visibleRect.origin = collectionView.contentOffset
@@ -160,53 +159,38 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         if let location = record.___FIELD_1___ as? String {
             let geocoder = CLGeocoder()
             geocoder.geocodeAddressString(location) { [weak self] placemarks, _ in
-                if let placemark = placemarks?.first, let location = placemark.location {
-                    let mark = MKPlacemark(placemark: placemark)
+                guard let strongSelf = self,
+                    let mapView = strongSelf.mapView,
+                    let placemark = placemarks?.first,
+                    let location = placemark.location else { return }
 
-                    if self?.locBool == false {
-                        // IF location NOT activated
-                        if var region = self?.mapView.region {
-                            region.center = location.coordinate
-                            region.span.longitudeDelta = 0.005
-                            region.span.latitudeDelta = 0.005
-                            self?.mapView.setRegion(region, animated: true)
-                            self?.mapView.addAnnotation(mark)
-                            let insets = UIEdgeInsets(top: 0, left: 0, bottom: 250, right: 0)
-                            if let rect = self?.mkMapRect(for: region) {
-                                self?.mapView.setVisibleMapRect(rect, edgePadding: insets, animated: true)
-                            }
-                        }
-                    } else {
-                        let directionRequest = MKDirections.Request()
-                        directionRequest.source = MKMapItem.forCurrentLocation()
+                let mark = MKPlacemark(placemark: placemark)
+                if strongSelf.hasLocationActivated {
 
-                        let destinationPlacemark = MKPlacemark(placemark: placemark)
-                        directionRequest.destination = MKMapItem(placemark: destinationPlacemark)
-                        directionRequest.transportType = MKDirectionsTransportType.automobile
+                    let directionRequest = MKDirections.Request()
+                    directionRequest.source = MKMapItem.forCurrentLocation()
 
-                        let directions = MKDirections(request: directionRequest)
+                    let destinationPlacemark = MKPlacemark(placemark: placemark)
+                    directionRequest.destination = MKMapItem(placemark: destinationPlacemark)
+                    directionRequest.transportType = MKDirectionsTransportType.automobile
+                    let directions = MKDirections(request: directionRequest)
 
-                        directions.calculate { (routeRepsonse, _) -> Void in
-
-                            let route = routeRepsonse?.routes[0]
-                            self?.mapView.addOverlay((route?.polyline)!, level: MKOverlayLevel.aboveRoads)
-
-                            var regionRect = route?.polyline.boundingMapRect
-
-                            let wPadding = (regionRect?.size.width)! * 0.5
-                            let hPadding = (regionRect?.size.height)! * 0.5
-
-                            regionRect?.size.width += wPadding
-                            regionRect?.size.height += hPadding
-
-                            regionRect?.origin.x -= wPadding / 2
-                            regionRect?.origin.y -= hPadding / 2
-
-                            self?.mapView.setRegion(MKCoordinateRegion(regionRect!), animated: true)
-                        }
+                    directions.calculate { (routeRepsonse, _) -> Void in
+                        guard let route = routeRepsonse?.routes[safe: 0] else { return }
+                        mapView.setRegion(for: route)
                     }
-                    self?.mapView.addAnnotation(mark)
+                } else {  // IF location NOT activated
+                    var region = mapView.region
+                    region.center = location.coordinate
+                    region.span.longitudeDelta = 0.005
+                    region.span.latitudeDelta = 0.005
+                    mapView.setRegion(region, animated: true)
+                    mapView.addAnnotation(mark)
+                    let insets = UIEdgeInsets(top: 0, left: 0, bottom: 250, right: 0)
+                    let rect = strongSelf.mkMapRect(for: region)
+                    mapView.setVisibleMapRect(rect, edgePadding: insets, animated: true)
                 }
+                mapView.addAnnotation(mark)
             }
         }
     }
@@ -234,16 +218,16 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         if CLLocationManager.locationServicesEnabled() {
             switch CLLocationManager.authorizationStatus() {
             case .notDetermined, .restricted, .denied:
-                locBool = false
-                logger.debug("locationNotActivated")
+                hasLocationActivated = false
+                logger.info("Location Not Activated")
             case .authorizedAlways, .authorizedWhenInUse:
-                locBool = true
-                logger.debug("locationActivated")
+                hasLocationActivated = true
+                logger.info("Location Activated")
             @unknown default:
                 logger.debug("unknown status for location manager")
             }
         } else {
-            locBool = false
+            hasLocationActivated = false
         }
     }
 
@@ -281,9 +265,31 @@ extension ___TABLE___ListForm: UICollectionViewDelegateFlowLayout {
     }
 }
 
+// MARK: extensions
+
 fileprivate extension Array {
     /// Returns the element at the specified index iff it is within bounds, otherwise nil.
     subscript(safe index: Int ) -> Element? {
         return indices.contains(index) ? self[index] : nil  /// Returns the element at the specified index iff it is within bounds, otherwise nil.
+    }
+}
+
+fileprivate extension MKMapView {
+
+    func setRegion(for route: MKRoute) {
+        self.addOverlay(route.polyline, level: .aboveRoads)
+
+        var regionRect = route.polyline.boundingMapRect
+
+        let wPadding = regionRect.size.width * 0.5
+        let hPadding = regionRect.size.height * 0.5
+
+        regionRect.size.width += wPadding
+        regionRect.size.height += hPadding
+
+        regionRect.origin.x -= wPadding / 2
+        regionRect.origin.y -= hPadding / 2
+
+        self.setRegion(MKCoordinateRegion(regionRect), animated: true)
     }
 }
