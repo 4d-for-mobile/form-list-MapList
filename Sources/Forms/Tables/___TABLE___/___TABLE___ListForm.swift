@@ -15,27 +15,16 @@ import CoreLocation
 @IBDesignable
 class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationManagerDelegate {
 
-    var records: [___TABLE___]? {
-        return (self.dataSource?.fetchedRecords.compactMap { $0.store as? ___TABLE___ })
-    }
-
-    @IBInspectable open var animator: String = "parallax" {
-        didSet {
-            self.animator = ___TABLE___LayoutAttributesAnimatorType(string: self.animator)
-        }
-    }
-
-    var animator: ___TABLE___LayoutAttributesAnimatorType = .parallax {
-        didSet {
-            updateLayoutAnimator()
-        }
-    }
-
     @IBOutlet weak var mapView: MKMapView!
     let annotation = MKPointAnnotation()
     var locationManager = CLLocationManager()
     var locBool = Bool()
     let actionButton = UIButton()
+
+    /// List of record from data sources
+    var records: [___TABLE___]? {
+        return (self.dataSource?.fetchedRecords.compactMap { $0.store as? ___TABLE___ })
+    }
 
     // Do not edit name or override tableName
     public override var tableName: String {
@@ -49,7 +38,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         updateLayoutAnimator()
 
         // Action Button definition
-        actionButton.frame = CGRect(x: screenWidth - 70, y: 45, width: 50, height: 50)
+        actionButton.frame = CGRect(x: UIScreen.main.bounds.width - 70, y: 45, width: 50, height: 50)
         let image = UIImage(named: "moreButton")
         actionButton.setImage(image, for: UIControl.State.normal)
         actionButton.actionSheet = self.actionSheet
@@ -110,7 +99,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         }, completion: nil)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-        self.findPosition()
+            self.findPosition()
         }
     }
 
@@ -122,12 +111,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         // Called after the view was dismissed, covered or otherwise hidden. Default does nothing
     }
 
-    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
-        let overlays = mapView.overlays
-        mapView.removeOverlays(overlays)
-        mapView.removeAnnotations(mapView.annotations)
-        findPosition()
-    }
+    // MARK: scroll and layout animation
 
     func updateLayoutAnimator() {
         if let layout = self.collectionView?.collectionViewLayout as? AnimatedCollectionViewLayout {
@@ -141,6 +125,28 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         scrollView.setContentOffset(.zero, animated: false)
     }
 
+    public override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        let overlays = mapView.overlays
+        mapView.removeOverlays(overlays)
+        mapView.removeAnnotations(mapView.annotations)
+        findPosition()
+    }
+
+    // MARK: collection view
+    override func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
+        logger.verbose(indexPath.row)
+        _ = self.collectionView?.visibleCells
+    }
+
+    // MARK: Search and locations
+
+    func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
+        let overlays = mapView.overlays
+        mapView.removeOverlays(overlays)
+        mapView.removeAnnotations(mapView.annotations)
+        findPosition()
+    }
+
     // swiftlint:disable:next function_body_length
     func findPosition() {
         var visibleRect = CGRect()
@@ -149,12 +155,9 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         let visiblePoint = CGPoint(x: CGFloat(visibleRect.midX), y: CGFloat(visibleRect.midY))
         let visibleIndexPath: IndexPath? = collectionView.indexPathForItem(at: visiblePoint)
 
-        guard let record = self.records?[safe:visibleIndexPath?.row ?? 0] else {
-            return
-        }
+        guard let record = self.records?[safe: visibleIndexPath?.row ?? 0] else { return }
 
-        if let location = record.___FIELD_1___ {
-
+        if let location = record.___FIELD_1___ as? String {
             let geocoder = CLGeocoder()
             geocoder.geocodeAddressString(location) { [weak self] placemarks, _ in
                 if let placemark = placemarks?.first, let location = placemark.location {
@@ -169,7 +172,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
                             self?.mapView.setRegion(region, animated: true)
                             self?.mapView.addAnnotation(mark)
                             let insets = UIEdgeInsets(top: 0, left: 0, bottom: 250, right: 0)
-                            if let rect = self?.MKMapRectForCoordinateRegion(region: region) {
+                            if let rect = self?.mkMapRect(for: region) {
                                 self?.mapView.setVisibleMapRect(rect, edgePadding: insets, animated: true)
                             }
                         }
@@ -208,8 +211,8 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         }
     }
 
-    // Convert CoordinateRegion to MapRect
-    func MKMapRectForCoordinateRegion(region: MKCoordinateRegion) -> MKMapRect {
+    /// Convert CoordinateRegion to MapRect
+    func mkMapRect(for region: MKCoordinateRegion) -> MKMapRect {
         let topLeft = CLLocationCoordinate2D(latitude: region.center.latitude + (region.span.latitudeDelta/2), longitude: region.center.longitude - (region.span.longitudeDelta/2))
         let bottomRight = CLLocationCoordinate2D(latitude: region.center.latitude - (region.span.latitudeDelta/2), longitude: region.center.longitude + (region.span.longitudeDelta/2))
         let top = MKMapPoint(topLeft)
@@ -228,36 +231,25 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
     }
 
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
-
         if CLLocationManager.locationServicesEnabled() {
             switch CLLocationManager.authorizationStatus() {
             case .notDetermined, .restricted, .denied:
                 locBool = false
-                print("locationNotActivated")
+                logger.debug("locationNotActivated")
             case .authorizedAlways, .authorizedWhenInUse:
                 locBool = true
-                print("locationActivated")
+                logger.debug("locationActivated")
+            @unknown default:
+                logger.debug("unknown status for location manager")
             }
         } else {
             locBool = false
         }
     }
 
-    override func collectionView(_ collectionView: UICollectionView, didEndDisplaying cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
-        print(indexPath.row)
-        if let cells = self.collectionView?.visibleCells {
-        }
-    }
-
-    public override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-
-        let overlays = mapView.overlays
-        mapView.removeOverlays(overlays)
-        mapView.removeAnnotations(mapView.annotations)
-        findPosition()
-    }
 }
 
+// MARK: - UICollectionViewDelegateFlowLayout
 extension ___TABLE___ListForm: UICollectionViewDelegateFlowLayout {
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
         return 1
@@ -289,76 +281,9 @@ extension ___TABLE___ListForm: UICollectionViewDelegateFlowLayout {
     }
 }
 
-public enum ___TABLE___LayoutAttributesAnimatorType {
-    case parallax
-    case cube
-    case linearCard
-    case rotateInOut
-    case page
-    case crossFade
-    case snapIn
-
-    static let `default`: ___TABLE___LayoutAttributesAnimatorType = .parallax
-}
-
-extension ___TABLE___LayoutAttributesAnimatorType {
-
-    public init(string: String?) {
-        guard let string = string else {
-            self = .default
-            return
-        }
-        let name = string.lowercased()
-        switch name {
-        case "parallax":
-            self = .parallax
-        case "cube":
-            self = .cube
-        case "linearcard":
-            self = .linearCard
-        case "rotateinout":
-            self = .rotateInOut
-        case "page":
-            self = .page
-        case "crossfade":
-            self = .crossFade
-        case "snapin":
-            self = .snapIn
-        default:
-            assertionFailure("Unknown animator \(name)")
-            self = .default
-        }
-    }
-
-}
-
-extension ___TABLE___LayoutAttributesAnimatorType {
-    public var animator: LayoutAttributesAnimator {
-        switch self {
-        case .parallax:
-            return ParallaxAttributesAnimator()
-        case .cube:
-            return CubeAttributesAnimator()
-        case .linearCard:
-            return LinearCardAttributesAnimator()
-        case .rotateInOut:
-            return RotateInOutAttributesAnimator()
-        case .snapIn:
-            return SnapInAttributesAnimator()
-        case .page:
-            return PageAttributesAnimator()
-        case .crossFade:
-            return CrossFadeAttributesAnimator()
-        }
-    }
-}
-
-extension Array {
+fileprivate extension Array {
     /// Returns the element at the specified index iff it is within bounds, otherwise nil.
     subscript(safe index: Int ) -> Element? {
         return indices.contains(index) ? self[index] : nil  /// Returns the element at the specified index iff it is within bounds, otherwise nil.
     }
-}
-private var screenWidth: CGFloat {
-    return UIScreen.main.bounds.width
 }
