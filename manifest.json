@@ -2,7 +2,7 @@
   "type": "listform",
   "name": "Map List",
   "fields": {
-    "count": 4
+    "count": 5
   },
   "capabilities": {
         "map": true
