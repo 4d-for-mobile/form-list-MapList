@@ -157,7 +157,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
 
         guard let record = self.records?[safe: visibleIndexPath?.row ?? 0] else { return }
 
-        if record.has(key: "___FIELD1___"), let location = record.value(forKeyPath: "___FIELD1___") {
+        if record.has(key: "___FIELD1___"), let location = record.value(forKeyPath: "___FIELD1___") as? String {
             let geocoder = CLGeocoder()
             geocoder.geocodeAddressString(location) { [weak self] placemarks, _ in
                 guard let strongSelf = self,
