@@ -7,6 +7,7 @@
 
 import UIKit
 import QMobileUI
+import QMobileDataSync
 import AnimatedCollectionViewLayout
 import MapKit
 import CoreLocation
