@@ -14,9 +14,10 @@ let package = Package(
     ],
     dependencies: [
        .package(url: "https://github.com/4d-for-ios/QMobileUI.git", .revision("HEAD")),
+       .package(url: "https://github.com/4d-for-ios/QMobileDataSync.git", .revision("HEAD")),
        .package(url: "https://github.com/KelvinJin/AnimatedCollectionViewLayout", .upToNextMajor(from: "1.0.0"))
     ],
     targets: [
-        .target(name: "___PRODUCT___", dependencies: ["QMobileUI", "AnimatedCollectionViewLayout"], path: "Sources")
+        .target(name: "___PRODUCT___", dependencies: ["QMobileUI", "QMobileDataSync","AnimatedCollectionViewLayout"], path: "Sources")
     ]
 )
