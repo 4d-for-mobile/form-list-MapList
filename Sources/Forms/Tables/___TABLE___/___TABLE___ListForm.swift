@@ -37,6 +37,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         // Do any additional setup after loading the view.
         collectionView?.isPagingEnabled = true
         updateLayoutAnimator()
+        findPosition()
 
         // Action Button definition
         actionButton.frame = CGRect(x: UIScreen.main.bounds.width - 70, y: 45, width: 50, height: 50)
@@ -84,11 +85,13 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
     override func onWillAppear(_ animated: Bool) {
         // Called when the view is about to made visible. Default does nothing
         collectionView.contentInset = UIEdgeInsets(top: collectionView.frame.height/6, left: 0, bottom: 0, right: 0)
+        if actionSheet == nil {
+            self.actionButton.isHidden = true
+        }
     }
 
     override func onDidAppear(_ animated: Bool) {
         // Called when the view has been fully transitioned onto the screen. Default does nothing
-
         // SearchBar animation
         UIView.animate(withDuration: 1.0, delay: 0.2, usingSpringWithDamping: 0.6, initialSpringVelocity: 2, options: [.curveEaseOut], animations: {
             self.searchBar.transform = .identity
@@ -112,8 +115,11 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         // Called after the view was dismissed, covered or otherwise hidden. Default does nothing
     }
 
-    // MARK: scroll and layout animation
+    override func onRefreshEnd(_ result: DataSync.SyncResult) {
+        self.findPosition()
+    }
 
+    // MARK: scroll and layout animation
     func updateLayoutAnimator() {
         if let layout = self.collectionView?.collectionViewLayout as? AnimatedCollectionViewLayout {
             layout.animator = LinearCardAttributesAnimator()
@@ -140,7 +146,6 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
     }
 
     // MARK: Search and locations
-
     func searchBarTextDidEndEditing(_ searchBar: UISearchBar) {
         let overlays = mapView.overlays
         mapView.removeOverlays(overlays)
@@ -155,7 +160,12 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
         let visiblePoint = CGPoint(x: CGFloat(visibleRect.midX), y: CGFloat(visibleRect.midY))
         let visibleIndexPath: IndexPath? = collectionView.indexPathForItem(at: visiblePoint)
 
-        guard let record = self.records?[safe: visibleIndexPath?.row ?? 0] else { return }
+        guard let record = self.records?[safe: visibleIndexPath?.row ?? 0] else {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                self.findPosition()
+            }
+            return
+        }
 
         if record.has(key: "___FIELD_1___"), let location = record.value(forKeyPath: "___FIELD_1___") as? String {
             let geocoder = CLGeocoder()
@@ -267,7 +277,6 @@ extension ___TABLE___ListForm: UICollectionViewDelegateFlowLayout {
 }
 
 // MARK: extensions
-
 fileprivate extension Array {
     /// Returns the element at the specified index iff it is within bounds, otherwise nil.
     subscript(safe index: Int ) -> Element? {
