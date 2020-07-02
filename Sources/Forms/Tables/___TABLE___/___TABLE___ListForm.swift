@@ -7,6 +7,7 @@
 
 import UIKit
 import QMobileUI
+import QMobileDataSync
 import AnimatedCollectionViewLayout
 import MapKit
 import CoreLocation
@@ -156,7 +157,7 @@ class ___TABLE___ListForm: ListFormCollection, MKMapViewDelegate, CLLocationMana
 
         guard let record = self.records?[safe: visibleIndexPath?.row ?? 0] else { return }
 
-        if let location = record.___FIELD_1___ as? String {
+        if record.has(key: "___FIELD1___"), let location = record.value(forKeyPath: "___FIELD1___") {
             let geocoder = CLGeocoder()
             geocoder.geocodeAddressString(location) { [weak self] placemarks, _ in
                 guard let strongSelf = self,
