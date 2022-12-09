@@ -9,5 +9,8 @@
     },
   "sdk": {
     "name": "AnimatedCollectionViewLayout"
+  },
+  "tags": {
+    "google_maps_platform": true
   }
 }
