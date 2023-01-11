@@ -72,7 +72,7 @@
 
                 <TextView
                     android:id="@+id/___SPECIFIC_ID_4___"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
@@ -91,7 +91,7 @@
 
                 <TextView
                     android:id="@+id/___SPECIFIC_ID_5___"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="0dp"
                     android:layout_marginStart="8dp"
                     android:layout_marginTop="8dp"
